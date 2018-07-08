@@ -302,16 +302,10 @@ mod utils;
 #[macro_use]
 pub mod list;
 pub mod map;
-pub mod queue;
 pub mod set;
-pub mod stack;
 pub mod vector;
 
 pub use list::List;
-pub use map::hash_trie_map::HashTrieMap;
 pub use map::red_black_tree_map::RedBlackTreeMap;
-pub use queue::Queue;
-pub use set::hash_trie_set::HashTrieSet;
 pub use set::red_black_tree_set::RedBlackTreeSet;
-pub use stack::Stack;
 pub use vector::Vector;

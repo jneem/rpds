@@ -3,15 +3,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::sync::Arc;
+use std::marker::PhantomData;
+use utils::container::Container;
 
 // TODO Use impl trait instead of this when available.
-pub type Iter<'a, T> = ::std::iter::Map<IterArc<'a, T>, fn(&Arc<T>) -> &T>;
+pub type Iter<'a, T, DataContainer> =
+    ::std::iter::Map<IterContainer<'a, T, DataContainer>, fn(&DataContainer) -> &T>;
 
 #[doc(hidden)]
 #[macro_export]
@@ -86,30 +88,41 @@ macro_rules! list {
 /// This is your classic functional list with "cons" and "nil" nodes, with a little extra sauce to
 /// make some operations more efficient.
 #[derive(Debug)]
-pub struct List<T> {
-    head:   Option<Arc<Node<T>>>,
-    last:   Option<Arc<T>>,
+// WIP pub struct List<T, DataContainer = Rc<T>>
+pub struct List<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    head:   Option<Arc<Node<T, DataContainer>>>,
+    last:   Option<DataContainer>,
     length: usize,
 }
 
 #[derive(Debug)]
-struct Node<T> {
-    value: Arc<T>,
-    next:  Option<Arc<Node<T>>>,
+struct Node<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    value: DataContainer,
+    next:  Option<Arc<Node<T, DataContainer>>>,
+    phantom_t: PhantomData<T>
 }
 
-impl<T> Clone for Node<T> {
-    fn clone(&self) -> Node<T> {
+impl<T, DataContainer> Clone for Node<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn clone(&self) -> Node<T, DataContainer> {
         Node {
-            value: Arc::clone(&self.value),
+            value: DataContainer::clone(&self.value),
             next:  self.next.clone(),
+            phantom_t: PhantomData
         }
     }
 }
 
-impl<T> List<T> {
+impl<T, DataContainer> List<T, DataContainer>
+    where DataContainer: Container<T>
+{
     #[must_use]
-    pub fn new() -> List<T> {
+    pub fn new() -> List<T, DataContainer> {
         List {
             head:   None,
             last:   None,
@@ -128,7 +141,7 @@ impl<T> List<T> {
     }
 
     #[must_use]
-    pub fn drop_first(&self) -> Option<List<T>> {
+    pub fn drop_first(&self) -> Option<List<T, DataContainer>> {
         let mut new_list = self.clone();
 
         if new_list.drop_first_mut() {
@@ -153,14 +166,15 @@ impl<T> List<T> {
         }
     }
 
-    fn push_front_arc_mut(&mut self, v: Arc<T>) {
+    fn push_front_arc_mut(&mut self, v: DataContainer) {
         if self.length == 0 {
-            self.last = Some(Arc::clone(&v));
+            self.last = Some(DataContainer::clone(&v));
         }
 
         let new_head = Node {
             value: v,
             next:  self.head.take(),
+            phantom_t: PhantomData
         };
 
         self.head = Some(Arc::new(new_head));
@@ -168,7 +182,7 @@ impl<T> List<T> {
     }
 
     #[must_use]
-    pub fn push_front(&self, v: T) -> List<T> {
+    pub fn push_front(&self, v: T) -> List<T, DataContainer> {
         let mut new_list = self.clone();
 
         new_list.push_front_mut(v);
@@ -177,29 +191,29 @@ impl<T> List<T> {
     }
 
     pub fn push_front_mut(&mut self, v: T) {
-        self.push_front_arc_mut(Arc::new(v))
+        self.push_front_arc_mut(DataContainer::new(v))
     }
 
     #[must_use]
-    pub fn reverse(&self) -> List<T> {
+    pub fn reverse(&self) -> List<T, DataContainer> {
         let mut new_list = List::new();
 
         // It is significantly faster to re-implement this here than to clone and call
         // `reverse_mut()`.  The reason is that since this is a linear data structure all nodes will
         // need to be cloned given that the ref count would be greater than one.
 
-        for v in self.iter_arc() {
-            new_list.push_front_arc_mut(Arc::clone(v));
+        for v in self.iter_container() {
+            new_list.push_front_arc_mut(DataContainer::clone(&v));
         }
 
         new_list
     }
 
     pub fn reverse_mut(&mut self) {
-        self.last = self.head.as_ref().map(|next| Arc::clone(&next.value));
+        self.last = self.head.as_ref().map(|next| DataContainer::clone(&next.value));
 
-        let mut prev: Option<Arc<Node<T>>> = None;
-        let mut current: Option<Arc<Node<T>>> = self.head.take();
+        let mut prev: Option<Arc<Node<T, DataContainer>>> = None;
+        let mut current: Option<Arc<Node<T, DataContainer>>> = self.head.take();
 
         while let Some(mut curr_arc) = current {
             // TODO Simplify once we have NLL.
@@ -230,42 +244,57 @@ impl<T> List<T> {
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<T> {
-        self.iter_arc().map(|v| v.borrow())
+    pub fn iter(&self) -> Iter<T, DataContainer> {
+        self.iter_container().map(|v| v.borrow())
     }
 
-    pub(crate) fn iter_arc(&self) -> IterArc<T> {
-        IterArc::new(self)
+    pub(crate) fn iter_container(&self) -> IterContainer<T, DataContainer> {
+        IterContainer::new(self)
     }
 }
 
-impl<T> Default for List<T> {
-    fn default() -> List<T> {
+impl<T, DataContainer> Default for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn default() -> List<T, DataContainer> {
         List::new()
     }
 }
 
-impl<T: PartialEq> PartialEq for List<T> {
-    fn eq(&self, other: &List<T>) -> bool {
+impl<T: PartialEq, DataContainer, DataContainerOther> PartialEq<List<T, DataContainerOther>> for List<T, DataContainer>
+    where DataContainer: Container<T>,
+          DataContainerOther: Container<T>
+{
+    fn eq(&self, other: &List<T, DataContainerOther>) -> bool {
         self.length == other.length && self.iter().eq(other.iter())
     }
 }
 
-impl<T: Eq> Eq for List<T> {}
+impl<T: Eq, DataContainer> Eq for List<T, DataContainer>
+    where DataContainer: Container<T>
+{}
 
-impl<T: PartialOrd<T>> PartialOrd<List<T>> for List<T> {
-    fn partial_cmp(&self, other: &List<T>) -> Option<Ordering> {
+// WIP utest to make sure it plays together with container of different types.
+impl<T: PartialOrd<T>, DataContainer, DataContainerOther> PartialOrd<List<T, DataContainerOther>> for List<T, DataContainer>
+    where DataContainer: Container<T>,
+          DataContainerOther: Container<T>
+{
+    fn partial_cmp(&self, other: &List<T, DataContainerOther>) -> Option<Ordering> {
         self.iter().partial_cmp(other.iter())
     }
 }
 
-impl<T: Ord> Ord for List<T> {
-    fn cmp(&self, other: &List<T>) -> Ordering {
+impl<T: Ord, DataContainer> Ord for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn cmp(&self, other: &List<T, DataContainer>) -> Ordering {
         self.iter().cmp(other.iter())
     }
 }
 
-impl<T: Hash> Hash for List<T> {
+impl<T: Hash, DataContainer> Hash for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
     fn hash<H: Hasher>(&self, state: &mut H) {
         // Add the hash of length so that if two collections are added one after the other it doesn't
         // hash to the same thing as a single collection with the same elements in the same order.
@@ -277,8 +306,10 @@ impl<T: Hash> Hash for List<T> {
     }
 }
 
-impl<T> Clone for List<T> {
-    fn clone(&self) -> List<T> {
+impl<T, DataContainer> Clone for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn clone(&self) -> List<T, DataContainer> {
         List {
             head:   self.head.clone(),
             last:   self.last.clone(),
@@ -287,7 +318,9 @@ impl<T> Clone for List<T> {
     }
 }
 
-impl<T: Display> Display for List<T> {
+impl<T: Display, DataContainer> Display for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
     fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         let mut first = true;
 
@@ -305,17 +338,21 @@ impl<T: Display> Display for List<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a List<T> {
+impl<'a, T, DataContainer> IntoIterator for &'a List<T, DataContainer>
+    where DataContainer: Container<T>
+{
     type Item = &'a T;
-    type IntoIter = Iter<'a, T>;
+    type IntoIter = Iter<'a, T, DataContainer>;
 
-    fn into_iter(self) -> Iter<'a, T> {
+    fn into_iter(self) -> Iter<'a, T, DataContainer> {
         self.iter()
     }
 }
 
-impl<T> FromIterator<T> for List<T> {
-    fn from_iter<I: IntoIterator<Item = T>>(into_iter: I) -> List<T> {
+impl<T, DataContainer> FromIterator<T> for List<T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn from_iter<I: IntoIterator<Item = T>>(into_iter: I) -> List<T, DataContainer> {
         let iter = into_iter.into_iter();
         let (min_size, max_size_hint) = iter.size_hint();
         let mut vec: Vec<T> = Vec::with_capacity(max_size_hint.unwrap_or(min_size));
@@ -324,7 +361,7 @@ impl<T> FromIterator<T> for List<T> {
             vec.push(e);
         }
 
-        let mut list: List<T> = List::new();
+        let mut list = List::new();
 
         for e in vec.into_iter().rev() {
             list.push_front_mut(e);
@@ -335,28 +372,35 @@ impl<T> FromIterator<T> for List<T> {
 }
 
 #[derive(Debug)]
-pub struct IterArc<'a, T: 'a> {
-    next:   Option<&'a Node<T>>,
+pub struct IterContainer<'a, T: 'a, DataContainer: 'a>
+    where DataContainer: Container<T>
+{
+    next:   Option<&'a Node<T, DataContainer>>,
     length: usize,
 }
 
-impl<'a, T> IterArc<'a, T> {
-    fn new(list: &List<T>) -> IterArc<T> {
-        IterArc {
+impl<'a, T, DataContainer> IterContainer<'a, T, DataContainer>
+    where DataContainer: Container<T>
+{
+    fn new(list: &List<T, DataContainer>) -> IterContainer<T, DataContainer> {
+        IterContainer {
             next:   list.head.as_ref().map(|node| node.as_ref()),
             length: list.len(),
         }
     }
 }
 
-impl<'a, T> Iterator for IterArc<'a, T> {
-    type Item = &'a Arc<T>;
+impl<'a, T, DataContainer> Iterator for IterContainer<'a, T, DataContainer>
+    where DataContainer: Container<T>
+{
+    type Item = &'a DataContainer;
 
-    fn next(&mut self) -> Option<&'a Arc<T>> {
+    fn next(&mut self) -> Option<&'a DataContainer> {
         match self.next {
             Some(&Node {
                 value: ref v,
                 next: ref t,
+                ..
             }) => {
                 self.next = t.as_ref().map(|node| node.as_ref());
                 self.length -= 1;
@@ -371,7 +415,9 @@ impl<'a, T> Iterator for IterArc<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for IterArc<'a, T> {}
+impl<'a, T, DataContainer> ExactSizeIterator for IterContainer<'a, T, DataContainer>
+    where DataContainer: Container<T>
+{}
 
 #[cfg(feature = "serde")]
 pub mod serde {
@@ -381,41 +427,48 @@ pub mod serde {
     use std::fmt;
     use std::marker::PhantomData;
 
-    impl<T> Serialize for List<T>
+    impl<T, DataContainer> Serialize for List<T, DataContainer>
     where
         T: Serialize,
+        DataContainer: Container<T>
     {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             serializer.collect_seq(self)
         }
     }
 
-    impl<'de, T> Deserialize<'de> for List<T>
+    impl<'de, T, DataContainer> Deserialize<'de> for List<T, DataContainer>
     where
         T: Deserialize<'de>,
+        DataContainer: Container<T>
     {
-        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<List<T>, D::Error> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<List<T, DataContainer>, D::Error> {
             deserializer.deserialize_seq(ListVisitor {
-                phantom: PhantomData,
+                phantom_t: PhantomData,
+                phantom_data_container: PhantomData
             })
         }
     }
 
-    struct ListVisitor<T> {
-        phantom: PhantomData<T>,
+    struct ListVisitor<T, DataContainer>
+        where DataContainer: Container<T>
+     {
+        phantom_t: PhantomData<T>,
+        phantom_data_container: PhantomData<DataContainer>,
     }
 
-    impl<'de, T> Visitor<'de> for ListVisitor<T>
+    impl<'de, T, DataContainer> Visitor<'de> for ListVisitor<T, DataContainer>
     where
         T: Deserialize<'de>,
+        DataContainer: Container<T>
     {
-        type Value = List<T>;
+        type Value = List<T, DataContainer>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a sequence")
         }
 
-        fn visit_seq<A>(self, mut seq: A) -> Result<List<T>, A::Error>
+        fn visit_seq<A>(self, mut seq: A) -> Result<List<T, DataContainer>, A::Error>
         where
             A: SeqAccess<'de>,
         {
@@ -429,7 +482,7 @@ pub mod serde {
                 vec.push(value);
             }
 
-            let mut list: List<T> = List::new();
+            let mut list: List<T, DataContainer> = List::new();
 
             for value in vec.into_iter().rev() {
                 list.push_front_mut(value);
@@ -440,5 +493,7 @@ pub mod serde {
     }
 }
 
+/*
 #[cfg(test)]
 mod test;
+*/

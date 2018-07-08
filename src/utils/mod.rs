@@ -5,6 +5,8 @@
 
 use std::sync::Arc;
 
+pub mod container;
+
 /// Assigns the content of `src` to `dest`.
 pub fn replace<T: Clone>(dest: &mut T, mut src: Arc<T>) {
     // To avoid unnecessary cloning we do this trick.  If we have exclusive ownership of the

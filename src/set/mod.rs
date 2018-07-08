@@ -3,5 +3,4 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-pub mod hash_trie_set;
 pub mod red_black_tree_set;
