@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+#![feature(uniform_paths)]
 
 #![cfg_attr(feature = "fatal-warnings", deny(warnings))]
 #![cfg_attr(feature = "cargo-clippy", allow(match_bool))]
@@ -18,13 +19,6 @@
 //! ```toml
 //! [dependencies]
 //! rpds = "<version>"
-//! ```
-//!
-//! Additionally, add this to your crate root:
-//!
-//! ```rust,ignore
-//! #[macro_use]
-//! extern crate rpds;
 //! ```
 //!
 //! ## Data Structures
@@ -294,7 +288,6 @@ extern crate serde;
 extern crate bincode;
 
 #[cfg(test)]
-#[macro_use]
 extern crate pretty_assertions;
 
 mod utils;
@@ -306,11 +299,11 @@ pub mod set;
 pub mod stack;
 pub mod vector;
 
-pub use list::List;
-pub use map::hash_trie_map::HashTrieMap;
-pub use map::red_black_tree_map::RedBlackTreeMap;
-pub use queue::Queue;
-pub use set::hash_trie_set::HashTrieSet;
-pub use set::red_black_tree_set::RedBlackTreeSet;
-pub use stack::Stack;
-pub use vector::Vector;
+pub use crate::list::List;
+pub use crate::map::hash_trie_map::HashTrieMap;
+pub use crate::map::red_black_tree_map::RedBlackTreeMap;
+pub use crate::queue::Queue;
+pub use crate::set::hash_trie_set::HashTrieSet;
+pub use crate::set::red_black_tree_set::RedBlackTreeSet;
+pub use crate::stack::Stack;
+pub use crate::vector::Vector;

@@ -435,11 +435,11 @@ impl<T> Vector<T> {
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.iter_arc().map(|v| v.borrow())
     }
 
-    fn iter_arc(&self) -> IterArc<T> {
+    fn iter_arc(&self) -> IterArc<'_, T> {
         IterArc::new(self)
     }
 }
@@ -505,7 +505,7 @@ impl<T> Display for Vector<T>
 where
     T: Display,
 {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("[")?;
@@ -563,7 +563,7 @@ struct IterStackElement<'a, T: 'a> {
 }
 
 impl<'a, T> IterStackElement<'a, T> {
-    fn new(node: &Node<T>, backwards: bool) -> IterStackElement<T> {
+    fn new(node: &Node<T>, backwards: bool) -> IterStackElement<'_, T> {
         IterStackElement {
             node,
             index: if backwards {
@@ -602,7 +602,7 @@ impl<'a, T> IterStackElement<'a, T> {
 }
 
 impl<'a, T> IterArc<'a, T> {
-    fn new(vector: &Vector<T>) -> IterArc<T> {
+    fn new(vector: &Vector<T>) -> IterArc<'_, T> {
         IterArc {
             vector,
 
@@ -614,7 +614,7 @@ impl<'a, T> IterArc<'a, T> {
         }
     }
 
-    fn dig(stack: &mut Vec<IterStackElement<T>>, backwards: bool) {
+    fn dig(stack: &mut Vec<IterStackElement<'_, T>>, backwards: bool) {
         let next_node: &Node<T> = {
             let stack_top = stack.last().unwrap();
 
@@ -638,7 +638,7 @@ impl<'a, T> IterArc<'a, T> {
         };
 
         if stack_field.is_none() {
-            let mut stack: Vec<IterStackElement<T>> = Vec::with_capacity(self.vector.height() + 1);
+            let mut stack: Vec<IterStackElement<'_, T>> = Vec::with_capacity(self.vector.height() + 1);
 
             stack.push(IterStackElement::new(self.vector.root.borrow(), backwards));
 
@@ -648,7 +648,7 @@ impl<'a, T> IterArc<'a, T> {
         }
     }
 
-    fn advance(stack: &mut Vec<IterStackElement<T>>, backwards: bool) {
+    fn advance(stack: &mut Vec<IterStackElement<'_, T>>, backwards: bool) {
         if let Some(mut stack_element) = stack.pop() {
             let finished = stack_element.advance(backwards);
 
@@ -742,8 +742,8 @@ impl<'a, T> ExactSizeIterator for IterArc<'a, T> {}
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+    use ::serde::ser::{Serialize, Serializer};
     use std::fmt;
     use std::marker::PhantomData;
 
@@ -777,7 +777,7 @@ pub mod serde {
     {
         type Value = Vector<T>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a sequence")
         }
 

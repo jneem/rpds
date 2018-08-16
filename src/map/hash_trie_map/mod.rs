@@ -7,7 +7,7 @@ mod sparse_array_usize;
 
 use self::sparse_array_usize::SparseArrayUsize;
 use super::entry::Entry;
-use list;
+use crate::list;
 use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::fmt::Display;
@@ -20,7 +20,7 @@ use std::ops::Index;
 use std::slice;
 use std::sync::Arc;
 use std::vec::Vec;
-use List;
+use crate::List;
 
 type HashValue = u64;
 
@@ -345,7 +345,7 @@ where
         };
 
         if let Some(node) = new_node {
-            ::utils::replace(self, node);
+            crate::utils::replace(self, node);
         }
     }
 
@@ -802,21 +802,21 @@ where
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         self.iter_arc().map(|e| (&e.key, &e.value))
     }
 
-    fn iter_arc(&self) -> IterArc<K, V> {
+    fn iter_arc(&self) -> IterArc<'_, K, V> {
         IterArc::new(self)
     }
 
     #[must_use]
-    pub fn keys(&self) -> IterKeys<K, V> {
+    pub fn keys(&self) -> IterKeys<'_, K, V> {
         self.iter().map(|(k, _)| k)
     }
 
     #[must_use]
-    pub fn values(&self) -> IterValues<K, V> {
+    pub fn values(&self) -> IterValues<'_, K, V> {
         self.iter().map(|(_, v)| v)
     }
 }
@@ -884,7 +884,7 @@ where
     V: Display,
     H: Clone,
 {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("{")?;
@@ -949,7 +949,7 @@ impl<'a, K, V> IterStackElement<'a, K, V>
 where
     K: Eq + Hash,
 {
-    fn new(node: &Node<K, V>) -> IterStackElement<K, V> {
+    fn new(node: &Node<K, V>) -> IterStackElement<'_, K, V> {
         match *node {
             Node::Branch(ref children) => IterStackElement::Branch(children.iter().peekable()),
             Node::Leaf(Bucket::Single(ref entry)) => IterStackElement::LeafSingle(entry),
@@ -999,8 +999,8 @@ impl<'a, K, V> IterArc<'a, K, V>
 where
     K: Eq + Hash,
 {
-    fn new<H: BuildHasher + Clone>(map: &HashTrieMap<K, V, H>) -> IterArc<K, V> {
-        let mut stack: Vec<IterStackElement<K, V>> =
+    fn new<H: BuildHasher + Clone>(map: &HashTrieMap<K, V, H>) -> IterArc<'_, K, V> {
+        let mut stack: Vec<IterStackElement<'_, K, V>> =
             Vec::with_capacity(iter_utils::trie_max_height(map.degree) + 1);
 
         if map.size() > 0 {
@@ -1018,7 +1018,7 @@ where
     }
 
     fn dig(&mut self) {
-        let next_stack_elem: Option<IterStackElement<K, V>> =
+        let next_stack_elem: Option<IterStackElement<'_, K, V>> =
             self.stack
                 .last_mut()
                 .and_then(|stack_top| match *stack_top {
@@ -1080,8 +1080,8 @@ impl<'a, K: Eq + Hash, V> ExactSizeIterator for IterArc<'a, K, V> {}
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer, MapAccess, Visitor};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer, MapAccess, Visitor};
+    use ::serde::ser::{Serialize, Serializer};
     use std::fmt;
     use std::marker::PhantomData;
 
@@ -1123,7 +1123,7 @@ pub mod serde {
     {
         type Value = HashTrieMap<K, V, H>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 

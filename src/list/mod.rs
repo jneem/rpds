@@ -230,11 +230,11 @@ impl<T> List<T> {
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.iter_arc().map(|v| v.borrow())
     }
 
-    pub(crate) fn iter_arc(&self) -> IterArc<T> {
+    pub(crate) fn iter_arc(&self) -> IterArc<'_, T> {
         IterArc::new(self)
     }
 }
@@ -288,7 +288,7 @@ impl<T> Clone for List<T> {
 }
 
 impl<T: Display> Display for List<T> {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("[")?;
@@ -341,7 +341,7 @@ pub struct IterArc<'a, T: 'a> {
 }
 
 impl<'a, T> IterArc<'a, T> {
-    fn new(list: &List<T>) -> IterArc<T> {
+    fn new(list: &List<T>) -> IterArc<'_, T> {
         IterArc {
             next:   list.head.as_ref().map(|node| node.as_ref()),
             length: list.len(),
@@ -376,8 +376,8 @@ impl<'a, T> ExactSizeIterator for IterArc<'a, T> {}
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+    use ::serde::ser::{Serialize, Serializer};
     use std::fmt;
     use std::marker::PhantomData;
 
@@ -411,7 +411,7 @@ pub mod serde {
     {
         type Value = List<T>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a sequence")
         }
 

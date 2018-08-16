@@ -1285,12 +1285,12 @@ mod compile_time {
 
     #[test]
     fn test_is_send() {
-        let _: Box<Send> = Box::new(RedBlackTreeMap::<i32, i32>::new());
+        let _: Box<dyn Send> = Box::new(RedBlackTreeMap::<i32, i32>::new());
     }
 
     #[test]
     fn test_is_sync() {
-        let _: Box<Sync> = Box::new(RedBlackTreeMap::<i32, i32>::new());
+        let _: Box<dyn Sync> = Box::new(RedBlackTreeMap::<i32, i32>::new());
     }
 }
 

@@ -3,12 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use map::red_black_tree_map;
+use crate::map::red_black_tree_map;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::fmt::Display;
 use std::iter::FromIterator;
-use RedBlackTreeMap;
+use crate::RedBlackTreeMap;
 
 // TODO Use impl trait instead of this when available.
 pub type Iter<'a, T> = red_black_tree_map::IterKeys<'a, T, ()>;
@@ -190,7 +190,7 @@ where
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.map.keys()
     }
 }
@@ -230,7 +230,7 @@ impl<T> Display for RedBlackTreeSet<T>
 where
     T: Ord + Display,
 {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("{")?;
@@ -278,8 +278,8 @@ where
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+    use ::serde::ser::{Serialize, Serializer};
     use std::fmt;
     use std::marker::PhantomData;
 
@@ -315,7 +315,7 @@ pub mod serde {
     {
         type Value = RedBlackTreeSet<T>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a sequence")
         }
 

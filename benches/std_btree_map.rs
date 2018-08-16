@@ -2,17 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
+#![feature(uniform_paths)]
 #![cfg_attr(feature = "fatal-warnings", deny(warnings))]
 
-#[macro_use]
 extern crate criterion;
 
 mod utils;
 
-use criterion::{black_box, Criterion};
+use ::criterion::{black_box, Criterion, criterion_main, criterion_group};
 use std::collections::BTreeMap;
-use utils::limit;
+use crate::utils::limit;
 
 fn std_btree_map_insert(c: &mut Criterion) {
     let limit = limit(10_000);

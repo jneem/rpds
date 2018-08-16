@@ -9,10 +9,10 @@ use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::sync::Arc;
-use List;
+use crate::List;
 
 // TODO Use impl trait instead of this when available.
-type IterArc<'a, T> = ::std::iter::Chain<::list::IterArc<'a, T>, LazilyReversedListIter<'a, T>>;
+type IterArc<'a, T> = ::std::iter::Chain<crate::list::IterArc<'a, T>, LazilyReversedListIter<'a, T>>;
 pub type Iter<'a, T> = ::std::iter::Map<IterArc<'a, T>, fn(&Arc<T>) -> &T>;
 
 /// Creates a [`Queue`](queue/struct.Queue.html) containing the given arguments:
@@ -142,11 +142,11 @@ impl<T> Queue<T> {
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.iter_arc().map(|v| v.borrow())
     }
 
-    fn iter_arc(&self) -> IterArc<T> {
+    fn iter_arc(&self) -> IterArc<'_, T> {
         self.out_list
             .iter_arc()
             .chain(LazilyReversedListIter::new(&self.in_list))
@@ -202,7 +202,7 @@ impl<T> Clone for Queue<T> {
 }
 
 impl<T: Display> Display for Queue<T> {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("Queue(")?;
@@ -248,7 +248,7 @@ pub enum LazilyReversedListIter<'a, T: 'a> {
 }
 
 impl<'a, T> LazilyReversedListIter<'a, T> {
-    fn new(list: &List<T>) -> LazilyReversedListIter<T> {
+    fn new(list: &List<T>) -> LazilyReversedListIter<'_, T> {
         LazilyReversedListIter::Uninitialized { list }
     }
 }
@@ -309,8 +309,8 @@ impl<'a, T> ExactSizeIterator for LazilyReversedListIter<'a, T> {}
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer};
+    use ::serde::ser::{Serialize, Serializer};
 
     impl<T> Serialize for Queue<T>
     where

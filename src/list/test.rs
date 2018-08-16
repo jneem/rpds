@@ -70,12 +70,12 @@ mod compile_time {
 
     #[test]
     fn test_is_send() {
-        let _: Box<Send> = Box::new(List::<i32>::new());
+        let _: Box<dyn Send> = Box::new(List::<i32>::new());
     }
 
     #[test]
     fn test_is_sync() {
-        let _: Box<Sync> = Box::new(List::<i32>::new());
+        let _: Box<dyn Sync> = Box::new(List::<i32>::new());
     }
 }
 

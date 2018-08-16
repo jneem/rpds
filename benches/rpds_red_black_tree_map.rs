@@ -2,18 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
+#![feature(uniform_paths)]
 #![cfg_attr(feature = "fatal-warnings", deny(warnings))]
 
-#[macro_use]
 extern crate criterion;
 extern crate rpds;
 
 mod utils;
 
-use criterion::{black_box, Criterion};
-use rpds::RedBlackTreeMap;
-use utils::limit;
+use ::criterion::{black_box, Criterion, criterion_main, criterion_group};
+use ::rpds::RedBlackTreeMap;
+use crate::utils::limit;
 
 fn rpds_red_black_tree_map_insert(c: &mut Criterion) {
     let limit = limit(10_000);

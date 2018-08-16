@@ -87,7 +87,7 @@ impl<T> SparseArrayUsize<T> {
         self.bitmap.count_ones() as usize
     }
 
-    pub fn iter(&self) -> slice::Iter<T> {
+    pub fn iter(&self) -> slice::Iter<'_, T> {
         self.array.iter()
     }
 }

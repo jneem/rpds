@@ -419,11 +419,11 @@ where
         match (left, right) {
             (None, None) => false,
             (None, Some(r_arc)) => {
-                ::utils::replace(node, r_arc);
+                crate::utils::replace(node, r_arc);
                 true
             }
             (Some(l_arc), None) => {
-                ::utils::replace(node, l_arc);
+                crate::utils::replace(node, l_arc);
                 true
             }
             (Some(mut l_arc), Some(mut r_arc)) => {
@@ -891,21 +891,21 @@ where
     }
 
     #[must_use]
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         self.iter_arc().map(|e| (&e.key, &e.value))
     }
 
-    fn iter_arc(&self) -> IterArc<K, V> {
+    fn iter_arc(&self) -> IterArc<'_, K, V> {
         IterArc::new(self)
     }
 
     #[must_use]
-    pub fn keys(&self) -> IterKeys<K, V> {
+    pub fn keys(&self) -> IterKeys<'_, K, V> {
         self.iter().map(|(k, _)| k)
     }
 
     #[must_use]
-    pub fn values(&self) -> IterValues<K, V> {
+    pub fn values(&self) -> IterValues<'_, K, V> {
         self.iter().map(|(_, v)| v)
     }
 }
@@ -989,7 +989,7 @@ where
     K: Ord + Display,
     V: Display,
 {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         let mut first = true;
 
         fmt.write_str("{")?;
@@ -1071,7 +1071,7 @@ impl<'a, K, V> IterArc<'a, K, V>
 where
     K: Ord,
 {
-    fn new(map: &RedBlackTreeMap<K, V>) -> IterArc<K, V> {
+    fn new(map: &RedBlackTreeMap<K, V>) -> IterArc<'_, K, V> {
         IterArc {
             map,
 
@@ -1213,8 +1213,8 @@ impl<'a, K: Ord, V> ExactSizeIterator for IterArc<'a, K, V> {}
 #[cfg(feature = "serde")]
 pub mod serde {
     use super::*;
-    use serde::de::{Deserialize, Deserializer, MapAccess, Visitor};
-    use serde::ser::{Serialize, Serializer};
+    use ::serde::de::{Deserialize, Deserializer, MapAccess, Visitor};
+    use ::serde::ser::{Serialize, Serializer};
     use std::fmt;
     use std::marker::PhantomData;
 
@@ -1253,7 +1253,7 @@ pub mod serde {
     {
         type Value = RedBlackTreeMap<K, V>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 
