@@ -280,15 +280,8 @@
 //! rpds = { version = "<version>", features = ["serde"] }
 //! ```
 
-#[cfg(feature = "serde")]
-extern crate serde;
-
-#[cfg(test)]
-#[cfg(feature = "serde")]
-extern crate bincode;
-
-#[cfg(test)]
-extern crate pretty_assertions;
+// WIP in band lifetimes
+// WIP Infer `T: 'x` outlives requirements on structs
 
 mod utils;
 #[macro_use]

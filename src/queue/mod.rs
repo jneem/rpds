@@ -257,7 +257,7 @@ impl<'a, T> Iterator for LazilyReversedListIter<'a, T> {
     type Item = &'a Arc<T>;
 
     fn next(&mut self) -> Option<&'a Arc<T>> {
-        match *self {
+        match self {
             LazilyReversedListIter::Uninitialized { list } => {
                 let len = list.len();
                 let mut vec: Vec<&'a Arc<T>> = Vec::with_capacity(len);
@@ -292,7 +292,7 @@ impl<'a, T> Iterator for LazilyReversedListIter<'a, T> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = match *self {
+        let len = match self {
             LazilyReversedListIter::Uninitialized { list } => list.len(),
             LazilyReversedListIter::Initialized {
                 current: Some(i), ..

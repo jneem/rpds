@@ -4,6 +4,7 @@
  */
 
 use super::*;
+use pretty_assertions::assert_eq;
 
 mod iter {
     #[test]

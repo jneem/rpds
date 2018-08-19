@@ -5,8 +5,9 @@ os:
   - osx
 
 rust:
-  - stable
-  - beta
+# WIP
+#  - stable
+#  - beta
   - nightly
 
 addons:

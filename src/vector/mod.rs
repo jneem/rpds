@@ -115,9 +115,9 @@ impl<T> Node<T> {
     fn get<F: Fn(usize, usize) -> usize>(&self, index: usize, height: usize, bucket: F) -> &T {
         let b = bucket(index, height);
 
-        match *self {
-            Node::Branch(ref a) => a[b].get(index, height - 1, bucket),
-            Node::Leaf(ref a) => {
+        match self {
+            Node::Branch(a) => a[b].get(index, height - 1, bucket),
+            Node::Leaf(a) => {
                 debug_assert_eq!(height, 0);
                 a[b].as_ref()
             }
@@ -127,8 +127,8 @@ impl<T> Node<T> {
     fn assoc<F: Fn(usize) -> usize>(&mut self, value: T, height: usize, bucket: F) {
         let b = bucket(height);
 
-        match *self {
-            Node::Leaf(ref mut a) => {
+        match self {
+            Node::Leaf(a) => {
                 debug_assert_eq!(height, 0, "cannot have a leaf at this height");
 
                 if a.len() == b {
@@ -138,22 +138,23 @@ impl<T> Node<T> {
                 }
             }
 
-            Node::Branch(ref mut a) => {
+            Node::Branch(a) => {
                 debug_assert!(height > 0, "cannot have a branch at this height");
 
-                if let Some(subtree) = a.get_mut(b) {
-                    Arc::make_mut(subtree).assoc(value, height - 1, bucket);
-                    return; // TODO avoid return when NLL are ready.
+                match a.get_mut(b) {
+                    Some(subtree) =>
+                        Arc::make_mut(subtree).assoc(value, height - 1, bucket),
+                    None => {
+                        let mut subtree = if height > 1 {
+                            Node::new_empty_branch()
+                        } else {
+                            Node::new_empty_leaf()
+                        };
+
+                        subtree.assoc(value, height - 1, bucket);
+                        a.push(Arc::new(subtree));
+                    }
                 }
-
-                let mut subtree = if height > 1 {
-                    Node::new_empty_branch()
-                } else {
-                    Node::new_empty_leaf()
-                };
-
-                subtree.assoc(value, height - 1, bucket);
-                a.push(Arc::new(subtree));
             }
         }
     }
@@ -169,9 +170,9 @@ impl<T> Node<T> {
     }
 
     fn used(&self) -> usize {
-        match *self {
-            Node::Leaf(ref a) => a.len(),
-            Node::Branch(ref a) => a.len(),
+        match self {
+            Node::Leaf(a) => a.len(),
+            Node::Branch(a) => a.len(),
         }
     }
 
@@ -185,12 +186,12 @@ impl<T> Node<T> {
             return true;
         }
 
-        match *self {
-            Node::Leaf(ref mut a) => {
+        match self {
+            Node::Leaf(a) => {
                 a.pop();
             }
 
-            Node::Branch(ref mut a) => if Arc::make_mut(a.last_mut().unwrap()).drop_last() {
+            Node::Branch(a) => if Arc::make_mut(a.last_mut().unwrap()).drop_last() {
                 a.pop();
             },
         }
@@ -201,9 +202,9 @@ impl<T> Node<T> {
 
 impl<T> Clone for Node<T> {
     fn clone(&self) -> Node<T> {
-        match *self {
-            Node::Branch(ref a) => Node::Branch(Vec::clone(a)),
-            Node::Leaf(ref a) => Node::Leaf(Vec::clone(a)),
+        match self {
+            Node::Branch(a) => Node::Branch(Vec::clone(a)),
+            Node::Leaf(a) => Node::Leaf(Vec::clone(a)),
         }
     }
 }
@@ -375,18 +376,12 @@ impl<T> Vector<T> {
     ///
     /// The trie must always have a compressed root.
     fn compress_root(root: &mut Node<T>) -> Option<Arc<Node<T>>> {
-        match *root {
+        let singleton = root.is_singleton();
+
+        match root {
             Node::Leaf(_) => None,
-            Node::Branch(_) => if root.is_singleton() {
-                // TODO Simplify once we have NLL.
-                if let Node::Branch(ref mut a) = *root {
-                    a.pop()
-                } else {
-                    unreachable!()
-                }
-            } else {
-                None
-            },
+            Node::Branch(a) if singleton => a.pop(),
+            Node::Branch(_) => None,
         }
     }
 
@@ -575,15 +570,15 @@ impl<'a, T> IterStackElement<'a, T> {
     }
 
     fn current_node(&self) -> &'a Node<T> {
-        match *self.node {
-            Node::Branch(ref a) => a[self.index as usize].as_ref(),
+        match self.node {
+            Node::Branch(a) => a[self.index as usize].as_ref(),
             Node::Leaf(_) => panic!("called current node of a branch"),
         }
     }
 
     fn current_elem(&self) -> &'a Arc<T> {
-        match *self.node {
-            Node::Leaf(ref a) => &a[self.index as usize],
+        match self.node {
+            Node::Leaf(a) => &a[self.index as usize],
             Node::Branch(_) => panic!("called current element of a branch"),
         }
     }

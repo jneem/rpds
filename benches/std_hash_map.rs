@@ -5,8 +5,6 @@
 #![feature(uniform_paths)]
 #![cfg_attr(feature = "fatal-warnings", deny(warnings))]
 
-extern crate criterion;
-
 mod utils;
 
 use ::criterion::{black_box, Criterion, criterion_main, criterion_group};

@@ -139,7 +139,7 @@ impl<T> List<T> {
     }
 
     pub fn drop_first_mut(&mut self) -> bool {
-        if let Some(ref h) = self.head.take() {
+        if let Some(h) = self.head.take() {
             self.head = h.next.clone();
             self.length -= 1;
 
@@ -202,15 +202,12 @@ impl<T> List<T> {
         let mut current: Option<Arc<Node<T>>> = self.head.take();
 
         while let Some(mut curr_arc) = current {
-            // TODO Simplify once we have NLL.
-            {
-                let curr = Arc::make_mut(&mut curr_arc);
-                let curr_next = curr.next.take();
+            let curr = Arc::make_mut(&mut curr_arc);
+            let curr_next = curr.next.take();
 
-                curr.next = prev.take();
+            curr.next = prev.take();
 
-                current = curr_next;
-            }
+            current = curr_next;
             prev = Some(curr_arc);
         }
 
@@ -354,7 +351,7 @@ impl<'a, T> Iterator for IterArc<'a, T> {
 
     fn next(&mut self) -> Option<&'a Arc<T>> {
         match self.next {
-            Some(&Node {
+            Some(Node {
                 value: ref v,
                 next: ref t,
             }) => {

@@ -237,8 +237,8 @@ where
     ///                  c   d
     /// ```
     fn balance(&mut self) {
-        use self::Color::Black as B;
-        use self::Color::Red as R;
+        use Color::Black as B;
+        use Color::Red as R;
         use std::mem::swap;
 
         match self.color {
@@ -253,92 +253,79 @@ where
                 match (color_l, color_l_l, color_l_r, color_r, color_r_l, color_r_r) {
                     // Case 1
                     (Some(R), Some(R), ..) => {
-                        // TODO Simplify this and other cases once NLL is stable.
                         let mut node_l_arc = self.left.take().unwrap();
-                        {
-                            let node_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_arc);
-                            let mut node_l_l_arc = node_l.left.take().unwrap();
-                            {
-                                let node_l_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_l_arc);
+                        let node_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_arc);
+                        let mut node_l_l_arc = node_l.left.take().unwrap();
+                        let node_l_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_l_arc);
 
-                                self.color = Color::Red;
-                                node_l.color = Color::Black;
-                                node_l_l.color = Color::Black;
+                        self.color = Color::Red;
+                        node_l.color = Color::Black;
+                        node_l_l.color = Color::Black;
 
-                                swap(&mut self.entry, &mut node_l.entry);
-                                swap(&mut node_l.left, &mut node_l.right);
-                                swap(&mut self.right, &mut node_l.right);
-                            }
-                            self.left = Some(node_l_l_arc);
-                        }
+                        swap(&mut self.entry, &mut node_l.entry);
+                        swap(&mut node_l.left, &mut node_l.right);
+                        swap(&mut self.right, &mut node_l.right);
+
+                        self.left = Some(node_l_l_arc);
                         self.right = Some(node_l_arc);
                     }
 
                     // Case 2
                     (Some(R), _, Some(R), ..) => {
                         let mut node_l_arc = self.left.take().unwrap();
-                        {
-                            let node_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_arc);
-                            let mut node_l_r_arc = node_l.right.take().unwrap();
-                            {
-                                let node_l_r: &mut Node<K, V> = Arc::make_mut(&mut node_l_r_arc);
+                        let node_l: &mut Node<K, V> = Arc::make_mut(&mut node_l_arc);
+                        let mut node_l_r_arc = node_l.right.take().unwrap();
+                        let node_l_r: &mut Node<K, V> = Arc::make_mut(&mut node_l_r_arc);
 
-                                self.color = Color::Red;
-                                node_l.color = Color::Black;
-                                node_l_r.color = Color::Black;
+                        self.color = Color::Red;
+                        node_l.color = Color::Black;
+                        node_l_r.color = Color::Black;
 
-                                swap(&mut self.entry, &mut node_l_r.entry);
-                                swap(&mut node_l_r.left, &mut node_l_r.right);
-                                swap(&mut node_l.right, &mut node_l_r.right);
-                                swap(&mut self.right, &mut node_l_r.right);
-                            }
-                            self.right = Some(node_l_r_arc);
-                        }
+                        swap(&mut self.entry, &mut node_l_r.entry);
+                        swap(&mut node_l_r.left, &mut node_l_r.right);
+                        swap(&mut node_l.right, &mut node_l_r.right);
+                        swap(&mut self.right, &mut node_l_r.right);
+
+                        self.right = Some(node_l_r_arc);
                         self.left = Some(node_l_arc);
                     }
 
                     // Case 3
                     (.., Some(R), Some(R), _) => {
                         let mut node_r_arc = self.right.take().unwrap();
-                        {
-                            let node_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_arc);
-                            let mut node_r_l_arc = node_r.left.take().unwrap();
-                            {
-                                let node_r_l: &mut Node<K, V> = Arc::make_mut(&mut node_r_l_arc);
+                        let node_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_arc);
+                        let mut node_r_l_arc = node_r.left.take().unwrap();
+                        let node_r_l: &mut Node<K, V> = Arc::make_mut(&mut node_r_l_arc);
 
-                                self.color = Color::Red;
-                                node_r.color = Color::Black;
-                                node_r_l.color = Color::Black;
+                        self.color = Color::Red;
+                        node_r.color = Color::Black;
+                        node_r_l.color = Color::Black;
 
-                                swap(&mut self.entry, &mut node_r_l.entry);
-                                swap(&mut node_r.left, &mut node_r_l.right);
-                                swap(&mut node_r_l.left, &mut node_r_l.right);
-                                swap(&mut self.left, &mut node_r_l.left);
-                            }
-                            self.left = Some(node_r_l_arc);
-                        }
+                        swap(&mut self.entry, &mut node_r_l.entry);
+                        swap(&mut node_r.left, &mut node_r_l.right);
+                        swap(&mut node_r_l.left, &mut node_r_l.right);
+                        swap(&mut self.left, &mut node_r_l.left);
+
+                        self.left = Some(node_r_l_arc);
                         self.right = Some(node_r_arc);
                     }
 
                     // Case 4
                     (.., Some(R), _, Some(R)) => {
                         let mut node_r_arc = self.right.take().unwrap();
-                        {
-                            let node_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_arc);
-                            let mut node_r_r_arc = node_r.right.take().unwrap();
-                            {
-                                let node_r_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_r_arc);
+                        let node_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_arc);
+                        let mut node_r_r_arc = node_r.right.take().unwrap();
+                        let node_r_r: &mut Node<K, V> = Arc::make_mut(&mut node_r_r_arc);
 
-                                self.color = Color::Red;
-                                node_r.color = Color::Black;
-                                node_r_r.color = Color::Black;
+                        self.color = Color::Red;
+                        node_r.color = Color::Black;
+                        node_r_r.color = Color::Black;
 
-                                swap(&mut self.entry, &mut node_r.entry);
-                                swap(&mut node_r.left, &mut node_r.right);
-                                swap(&mut self.left, &mut node_r.left);
-                            }
-                            self.right = Some(node_r_r_arc);
-                        }
+                        swap(&mut self.entry, &mut node_r.entry);
+                        swap(&mut node_r.left, &mut node_r.right);
+                        swap(&mut self.left, &mut node_r.left);
+
+                        self.right = Some(node_r_r_arc);
                         self.left = Some(node_r_arc);
                     }
 
@@ -352,8 +339,8 @@ where
     /// Inserts the entry and returns whether the key is new.
     fn insert(root: &mut Option<Arc<Node<K, V>>>, key: K, value: V) -> bool {
         fn ins<K: Ord, V>(node: &mut Option<Arc<Node<K, V>>>, k: K, v: V, is_root: bool) -> bool {
-            match *node {
-                Some(ref mut n) => {
+            match node {
+                Some(n) => {
                     let node = Arc::make_mut(n);
 
                     let ret = match k.cmp(&node.entry.key) {
@@ -411,8 +398,8 @@ where
         left: Option<Arc<Node<K, V>>>,
         right: Option<Arc<Node<K, V>>>,
     ) -> bool {
-        use self::Color::Black as B;
-        use self::Color::Red as R;
+        use Color::Black as B;
+        use Color::Red as R;
 
         use std::mem::swap;
 
@@ -429,68 +416,50 @@ where
             (Some(mut l_arc), Some(mut r_arc)) => {
                 match (l_arc.color, r_arc.color) {
                     (B, R) => {
-                        // TODO Simplify this once we have NLL.
-                        {
-                            let r = Arc::make_mut(&mut r_arc);
-                            let rl = r.left.take();
+                        let r = Arc::make_mut(&mut r_arc);
+                        let rl = r.left.take();
 
-                            // This will always return `true`.
-                            Node::remove_fuse(node, Some(l_arc), rl);
+                        // This will always return `true`.
+                        Node::remove_fuse(node, Some(l_arc), rl);
 
-                            swap(node, r);
-                        }
+                        swap(node, r);
+
                         node.left = Some(r_arc);
                     }
                     (R, B) => {
-                        // TODO Simplify this once we have NLL.
-                        {
-                            let l = Arc::make_mut(&mut l_arc);
-                            let lr = l.right.take();
+                        let l = Arc::make_mut(&mut l_arc);
+                        let lr = l.right.take();
 
-                            // This will always return `true`.
-                            Node::remove_fuse(node, lr, Some(r_arc));
+                        // This will always return `true`.
+                        Node::remove_fuse(node, lr, Some(r_arc));
 
-                            swap(node, l);
-                        }
+                        swap(node, l);
+
                         node.right = Some(l_arc);
                     }
                     (R, R) => {
-                        // TODO Simplify this once we have NLL.
-                        let fused = {
-                            let r = Arc::make_mut(&mut r_arc);
-                            let rl = r.left.take();
-                            let l = Arc::make_mut(&mut l_arc);
-                            let lr = l.right.take();
+                        let r = Arc::make_mut(&mut r_arc);
+                        let rl = r.left.take();
+                        let l = Arc::make_mut(&mut l_arc);
+                        let lr = l.right.take();
 
-                            Node::remove_fuse(node, lr, rl)
-                        };
+                        let fused = Node::remove_fuse(node, lr, rl);
 
                         match node.color {
                             R if fused => {
                                 let fl = node.left.take();
                                 let fr = node.right.take();
 
-                                // TODO Simplify this once we have NLL.
-                                {
-                                    let r = Arc::make_mut(&mut r_arc);
-                                    let l = Arc::make_mut(&mut l_arc);
-
-                                    l.right = fl;
-                                    r.left = fr;
-                                }
+                                l.right = fl;
+                                r.left = fr;
 
                                 node.left = Some(l_arc);
                                 node.right = Some(r_arc);
                             }
                             _ => {
-                                // TODO Simplify this once we have NLL.
-                                {
-                                    let l = Arc::make_mut(&mut l_arc);
-                                    swap(l, node);
-                                }
+                                swap(l, node);
 
                                 if fused {
-                                    let r = Arc::make_mut(&mut r_arc);
                                     r.left = Some(l_arc);
                                 }
 
@@ -499,42 +468,28 @@ where
                         }
                     }
                     (B, B) => {
-                        // TODO Simplify this once we have NLL.
-                        let fused = {
-                            let r = Arc::make_mut(&mut r_arc);
-                            let rl = r.left.take();
-                            let l = Arc::make_mut(&mut l_arc);
-                            let lr = l.right.take();
+                        let r = Arc::make_mut(&mut r_arc);
+                        let rl = r.left.take();
+                        let l = Arc::make_mut(&mut l_arc);
+                        let lr = l.right.take();
 
-                            Node::remove_fuse(node, lr, rl)
-                        };
+                        let fused = Node::remove_fuse(node, lr, rl);
 
                         match node.color {
                             R if fused => {
                                 let fl = node.left.take();
                                 let fr = node.right.take();
 
-                                // TODO Simplify this once we have NLL.
-                                {
-                                    let r = Arc::make_mut(&mut r_arc);
-                                    let l = Arc::make_mut(&mut l_arc);
-
-                                    l.right = fl;
-                                    r.left = fr;
-                                }
+                                l.right = fl;
+                                r.left = fr;
 
                                 node.left = Some(l_arc);
                                 node.right = Some(r_arc);
                             }
                             _ => {
-                                // TODO Simplify this once we have NLL.
-                                {
-                                    let l = Arc::make_mut(&mut l_arc);
-                                    swap(l, node);
-                                }
+                                swap(l, node);
 
                                 if fused {
-                                    let r = Arc::make_mut(&mut r_arc);
                                     r.left = Some(l_arc);
                                 }
 
@@ -570,8 +525,8 @@ where
     }
 
     fn remove_balance_left(&mut self) {
-        use self::Color::Black as B;
-        use self::Color::Red as R;
+        use Color::Black as B;
+        use Color::Red as R;
 
         use std::mem::swap;
 
@@ -587,13 +542,10 @@ where
                 self_l.color = Color::Black;
             }
             (_, Some(B), _) => {
-                // TODO Remove scope when NLL is stable.
-                {
-                    let self_r = Arc::make_mut(self.right.as_mut().unwrap());
+                let self_r = Arc::make_mut(self.right.as_mut().unwrap());
 
-                    self.color = Color::Black;
-                    self_r.color = Color::Red;
-                }
+                self.color = Color::Black;
+                self_r.color = Color::Red;
 
                 self.remove_balance();
             }
@@ -601,12 +553,8 @@ where
                 let self_r = Arc::make_mut(self.right.as_mut().unwrap());
 
                 let mut self_r_l_arc = self_r.left.take().unwrap();
-                // TODO Simplify once NLL is stable.
-                let new_r_l = {
-                    let self_r_l = Arc::make_mut(&mut self_r_l_arc);
-
-                    self_r_l.right.take()
-                };
+                let self_r_l = Arc::make_mut(&mut self_r_l_arc);
+                let new_r_l = self_r_l.right.take();
 
                 self_r.color = Color::Black;
                 self_r.left = new_r_l;
@@ -616,15 +564,11 @@ where
 
                 self.color = Color::Red;
 
-                // TODO Simplify once NLL is stable.
-                {
-                    let self_r_l = Arc::make_mut(&mut self_r_l_arc);
+                self_r_l.right = self_r_l.left.take();
+                self_r_l.left = self.left.take();
 
-                    self_r_l.right = self_r_l.left.take();
-                    self_r_l.left = self.left.take();
+                swap(&mut self.entry, &mut self_r_l.entry);
 
-                    swap(&mut self.entry, &mut self_r_l.entry);
-                }
                 self.left = Some(self_r_l_arc);
             }
             _ => unreachable!(),
@@ -632,8 +576,8 @@ where
     }
 
     fn remove_balance_right(&mut self) {
-        use self::Color::Black as B;
-        use self::Color::Red as R;
+        use Color::Black as B;
+        use Color::Red as R;
 
         use std::mem::swap;
 
@@ -649,13 +593,10 @@ where
                 self_r.color = Color::Black;
             }
             (Some(B), ..) => {
-                // TODO Remove scope when NLL is stable.
-                {
-                    let self_l = Arc::make_mut(self.left.as_mut().unwrap());
+                let self_l = Arc::make_mut(self.left.as_mut().unwrap());
 
-                    self.color = Color::Black;
-                    self_l.color = Color::Red;
-                }
+                self.color = Color::Black;
+                self_l.color = Color::Red;
 
                 self.remove_balance();
             }
@@ -663,12 +604,8 @@ where
                 let self_l = Arc::make_mut(self.left.as_mut().unwrap());
 
                 let mut self_l_r_arc = self_l.right.take().unwrap();
-                // TODO Simplify once NLL is stable.
-                let new_l_r = {
-                    let self_l_r = Arc::make_mut(&mut self_l_r_arc);
-
-                    self_l_r.left.take()
-                };
+                let self_l_r = Arc::make_mut(&mut self_l_r_arc);
+                let new_l_r = self_l_r.left.take();
 
                 self_l.color = Color::Black;
                 self_l.right = new_l_r;
@@ -678,15 +615,11 @@ where
 
                 self.color = Color::Red;
 
-                // TODO Simplify once NLL is stable.
-                {
-                    let self_l_r = Arc::make_mut(&mut self_l_r_arc);
+                self_l_r.left = self_l_r.right.take();
+                self_l_r.right = self.right.take();
 
-                    self_l_r.left = self_l_r.right.take();
-                    self_l_r.right = self.right.take();
+                swap(&mut self.entry, &mut self_l_r.entry);
 
-                    swap(&mut self.entry, &mut self_l_r.entry);
-                }
                 self.right = Some(self_l_r_arc);
             }
             _ => unreachable!(),
@@ -741,7 +674,6 @@ where
             K: Borrow<Q> + Ord,
             Q: Ord,
         {
-            // TODO Simplify this once we have NLL.
             let (removed, make_node_none) = match *node {
                 Some(ref mut node_arc) => {
                     let node = Arc::make_mut(node_arc);

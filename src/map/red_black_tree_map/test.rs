@@ -3,9 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-extern crate rand;
-
 use super::*;
+use pretty_assertions::assert_eq;
 
 #[derive(Debug)]
 enum InvariantViolation {
@@ -128,6 +127,7 @@ where
 
 mod node {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     fn dummy_entry<T: Clone>(v: T) -> Entry<T, T> {
         Entry {
@@ -964,6 +964,7 @@ mod node {
 
 mod internal {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     fn insert_test(values: &[u32]) {
         let mut map = RedBlackTreeMap::new();
@@ -994,8 +995,8 @@ mod internal {
 
     #[test]
     fn test_insert() {
-        use self::rand::Rng;
-        use self::rand::SeedableRng;
+        use rand::Rng;
+        use rand::SeedableRng;
 
         let limit = 50_000;
         let seed: [u8; 32] = [
@@ -1049,8 +1050,8 @@ mod internal {
 
     #[test]
     fn test_remove() {
-        use self::rand::Rng;
-        use self::rand::SeedableRng;
+        use rand::Rng;
+        use rand::SeedableRng;
 
         let limit = 50_000;
         let seed: [u8; 32] = [
@@ -1080,6 +1081,7 @@ mod internal {
 
 mod iter {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_lg_floor() {

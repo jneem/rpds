@@ -5,6 +5,7 @@
 
 use super::*;
 use std::mem::size_of;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn test_new() {

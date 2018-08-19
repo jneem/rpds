@@ -4,13 +4,15 @@
  */
 
 use super::*;
+use pretty_assertions::assert_eq;
 
 mod bucket {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_list_remove_first() {
-        use self::bucket_utils::list_remove_first;
+        use bucket_utils::list_remove_first;
 
         let list_a_b_c = list!['a', 'b', 'c'];
         let list_b_c = list!['b', 'c'];
@@ -267,9 +269,10 @@ mod hasher_mocks {
 }
 
 mod node {
-    use self::hasher_mocks::*;
+    use hasher_mocks::*;
     use super::*;
     use std::collections::HashMap;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_new_empty_branch() {
@@ -596,6 +599,7 @@ mod node {
 
 mod iter {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_trie_max_height() {
