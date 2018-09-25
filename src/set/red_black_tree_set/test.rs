@@ -80,6 +80,25 @@ mod iter {
 
         assert_eq!(left, 0);
     }
+
+    #[test]
+    fn test_range() {
+        let set = rbt_set![1, 2, 6, 7];
+
+        macro_rules! cmp {
+            ($range:expr, $expected:expr) => {
+                assert_eq!(set.range($range).cloned().collect::<Vec<_>>(), $expected);
+            }
+        }
+
+        cmp!(.., vec![1, 2, 6, 7]);
+        cmp!(0.., vec![1, 2, 6, 7]);
+        cmp!(2.., vec![2, 6, 7]);
+        cmp!(1..2, vec![1]);
+        cmp!(..2, vec![1]);
+        cmp!(1..=2, vec![1, 2]);
+        cmp!(3..6, vec![]);
+    }
 }
 
 mod compile_time {
