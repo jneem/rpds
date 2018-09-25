@@ -88,7 +88,7 @@ mod iter {
         macro_rules! cmp {
             ($range:expr, $expected:expr) => {
                 assert_eq!(set.range($range).cloned().collect::<Vec<_>>(), $expected);
-            }
+            };
         }
 
         cmp!(.., vec![1, 2, 6, 7]);

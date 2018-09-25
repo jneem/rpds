@@ -13,7 +13,8 @@ use RedBlackTreeMap;
 
 // TODO Use impl trait instead of this when available.
 pub type Iter<'a, T> = red_black_tree_map::IterKeys<'a, T, ()>;
-pub type RangeIter<'a, T> = ::std::iter::Map<red_black_tree_map::RangeIter<'a, T, ()>, fn((&'a T, &())) -> &'a T>;
+pub type RangeIter<'a, T> =
+    ::std::iter::Map<red_black_tree_map::RangeIter<'a, T, ()>, fn((&'a T, &())) -> &'a T>;
 
 /// Creates a [`RedBlackTreeSet`](set/red_black_tree_set/struct.RedBlackTreeSet.html) containing the
 /// given arguments:
